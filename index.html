@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>gametest</title>
+    
+  </head>
+  <body>
+    <script type="module">
+      // import kaboom lib
+      import kaboom from "https://unpkg.com/kaboom@3000.0.1/dist/kaboom.mjs";
+      // initialize kaboom context
+      kaboom();      
+      setGravity(1200);
+      const SPEED=480;
+      var isjump=false
+      var shooting=false
+      add([
+        rect(width(),48),
+        outline(4),
+        area(),
+        pos(0,height()-48),
+        body({isStatic: true})
+      ])
+      loadSprite("bullet","mm-lemon.png")
+      loadSpriteAtlas("megaman-drew-sheet.png", {
+      "hero": {
+        x: 0,
+        y: 0,
+        width: 320,
+        height: 320,
+        sliceX: 10,
+        sliceY: 10,
+        anims: {
+            idle: { from: 0, to: 2 ,loop: true},
+            run: { from: 3, to: 6 ,loop:true},
+            jump: 7,
+            shoot: 10,
+            runshoot: { from: 13,to: 16 ,loop:true},
+            jumpshoot:17,
+            hurt: 21,
+        },
+    
+      },
+    })
+
+      const player = add([
+      sprite("hero",{anim:"idle"}),
+      body(),
+      pos(center()),
+      area(),
+      scale(3),
+      height(200),
+      width(200),
+      health(50)
+    ])
+    //player move
+    if(!shooting){
+      onKeyDown("left",
+                ()=>{
+                  player.move(-SPEED,0)
+                  if(player.curAnim()!=="run"&&player.isGrounded()){player.play("run")}
+                  player.flipX=false})
+      onKeyDown("right",
+                ()=>{
+                  if(player.curAnim()!=="run"&&player.isGrounded()){player.play("run")}
+                    player.flipX=true
+                    player.move(SPEED,0)})
+    }
+    onKeyDown("z",()=>{
+      if(player.isGrounded()){
+        player.jump()
+        player.play("jump")
+        isjump=true
+      }
+    })
+    if(!isjump){
+    onKeyRelease(()=>{
+      if(isKeyReleased("right")||isKeyReleased("left"))
+        player.play("idle")
+    })}
+    if(player.isGrounded()&&isjump){
+      player.play("idle")
+      isjump=false
+    }
+    onKeyPress("x",()=>{
+      shoot(player.pos.add(40,40))})
+    onKeyDown("x",()=>{
+      if(player.isGrounded()){
+        if(player.curAnim()==="run"){
+          shooting=true
+          if(player.curAnim()!=="runshoot"&&shooting){player.play("runshoot")}
+        }else{player.play("shoot")}
+      }else{
+        player.play("jumpshoot")
+      }})
+    onKeyRelease(()=>{
+      if(isKeyReleased("x")){
+        player.play("idle")
+        shooting=false
+      }
+    })
+    //playerhealth
+    player.on("hurt",()=>{
+      player.play("hurt")
+      wait(0.5,()=>{player.play("idle")})})
+    //shoot
+    function shoot(p){
+      if(player.flipX){
+      add([
+        sprite("bullet"),
+        pos(p),
+        move(0,800),
+        anchor("center"),
+        area(),
+        offscreen({destory:true}),
+        scale(2),
+      ])}else{
+        add([
+        sprite("bullet"),
+        pos(p),
+        move(0,-800),
+        anchor("center"),
+        area(),
+        offscreen({destory:true}),
+        scale(2),
+      ])
+      }
+    }
+    </script>
+  </body>
+</html>
+
+
